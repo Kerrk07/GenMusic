@@ -8,12 +8,14 @@ Workflow:
 
 from __future__ import annotations
 
+import os
 import re
 import unicodedata
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
+from pathlib import Path
 from statistics import mean, median
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
@@ -359,6 +361,25 @@ def _decision(score: float) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Input loader: accepts a raw string or a path to a .txt file
+# ---------------------------------------------------------------------------
+
+LyricsInput = Union[str, os.PathLike]
+
+
+def _load_lyrics(source: LyricsInput) -> str:
+    """
+    Accept either a raw lyrics string or a path to a .txt file.
+    If *source* is an existing file path, its contents are read and returned.
+    Otherwise the value is treated as a raw lyrics string.
+    """
+    path = Path(source)
+    if path.is_file():
+        return path.read_text(encoding="utf-8")
+    return str(source)
+
+
+# ---------------------------------------------------------------------------
 # Public API: LyricsSimilarityChecker
 # ---------------------------------------------------------------------------
 
@@ -383,22 +404,22 @@ class LyricsSimilarityChecker:
         self._thresholds = thresholds or _THRESHOLDS
 
     # ------------------------------------------------------------------
-    def compare(self, lyrics_a: str, lyrics_b: str) -> SimilarityResult:
+    def compare(self, lyrics_a: LyricsInput, lyrics_b: LyricsInput) -> SimilarityResult:
         """
         Full pipeline: normalize -> segment -> embed -> lexical -> style
         -> fuse -> output.
 
         Parameters
         ----------
-        lyrics_a, lyrics_b : raw lyrics strings (may contain section tags)
+        lyrics_a, lyrics_b : raw lyrics string OR path to a .txt file
 
         Returns
         -------
         SimilarityResult with all intermediate details attached.
         """
         # A-C: normalize + segment
-        seg_a = _segment(lyrics_a)
-        seg_b = _segment(lyrics_b)
+        seg_a = _segment(_load_lyrics(lyrics_a))
+        seg_b = _segment(_load_lyrics(lyrics_b))
 
         # D1 + E: semantic similarity
         emb_a = self._embedder.section_weighted_embedding(seg_a)
@@ -438,8 +459,8 @@ class LyricsSimilarityChecker:
     # ------------------------------------------------------------------
     def batch_compare(
         self,
-        reference: str,
-        candidates: list[str],
+        reference: LyricsInput,
+        candidates: list[LyricsInput],
     ) -> list[SimilarityResult]:
-        """Compare one reference against multiple candidate lyrics."""
+        """Compare one reference against multiple candidate lyrics (strings or .txt paths)."""
         return [self.compare(reference, c) for c in candidates]
