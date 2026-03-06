@@ -58,6 +58,34 @@ print(result.plagiarism_risk_score)  # e.g. 0.6732
 print(result.details)                # full breakdown per branch
 ```
 
+### Sample Output
+
+```
+==================================================
+  Reference : vertigo_beachfossil.txt
+  Candidate : ai_synthetic_vertigo.txt
+==================================================
+  Semantic similarity   : 0.6842
+  Lexical overlap       : 0.2197
+  Style similarity      : 0.5538
+  Plagiarism risk score : 0.4789
+  Decision flag         : MEDIUM
+==================================================
+
+Lexical breakdown:
+  Unigram Jaccard : 0.1757
+  Bigram  Jaccard : 0.0455
+  Trigram Jaccard : 0.0168
+  Edit similarity : 0.0340
+  Line max        : 0.6364
+  Line p90        : 0.3776
+
+Style / phonetic breakdown:
+  Rhyme similarity      : 0.1250
+  Repetition similarity : 0.9711
+  Structure similarity  : 1.0000
+```
+
 ### Dependencies
 
 | Package | Purpose |
